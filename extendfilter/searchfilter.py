@@ -4,6 +4,9 @@ connect('mongoengine_test', host='localhost', port=27017)
 
 class SearchFilter(QuerySet):
 
+    def __init__(self):
+        pass
+
     def ranges(self, minvalue, maxvalue, include=True):
         '''    :param minvalue: min value default (included)
                :param maxvalue: max value default (included)
@@ -38,12 +41,17 @@ class SearchFilter(QuerySet):
         for res in list_2:
             if res in list_1:
                 res_list.append(res)
-
+        print('Printing from the function')
         for res in res_list:
             print(res.price)
+        print('End printing from the function')
+        return res_list
 
 
-    def search_name(self, name, exact=False, caseinsensitive=False, startswith=False, endswith=False, contains=False):
+    def search_name(self, name, exact=False, caseinsensitive=True, startswith=False, endswith=False,
+                    contains=True):
+        '''BY default the name contains the keyword'''
+
         if exact:
             if caseinsensitive: # case insensitive
                 return Product.objects(name__iexact=name)
@@ -92,10 +100,11 @@ class SearchFilter(QuerySet):
         minvalue and maxvalue are necessary  
         '''
         if range:
-            return SearchFilter.ranges(self, minvalue=minvalue, maxvalue=maxvalue)
+            return SearchFilter.ranges(self, minvalue=minvalue, maxvalue=maxvalue, include=include)
 
 
-    def search_brand(self, brandname, exact=False, caseinsensitive=False, startswith=False, endswith=False, contains=False):
+    def search_brand(self, brandname, exact=False, caseinsensitive=True, startswith=False,
+                     endswith=False, contains=True):
         if exact:
             if caseinsensitive: # case insensitive
                 return Product.objects(brand__iexact=brandname)
@@ -121,30 +130,44 @@ class SearchFilter(QuerySet):
                 return Product.objects(brand__contains=brandname)
 
 
-    def search_category(self, categoryname, exact=False, caseinsensitive=False, startswith=False, endswith=False, contains=False):
+    def search_category(self, categoryname, exact=False, caseinsensitive=True, startswith=False,
+                        endswith=False, contains=True):
         if exact:
             if caseinsensitive: # case insensitive
-                return Product.objects(category__iexact=brandname)
+                return Product.objects(category__iexact=categoryname)
             else: # not case insensitive
-                return Product.objects(category__exact=brandname)
+                return Product.objects(category__exact=categoryname)
 
         if startswith:
             if caseinsensitive:  # case insensitive
-                return Product.objects(category__istartswith=brandname)
+                return Product.objects(category__istartswith=categoryname)
             else:  # not case insensitive
-                return Product.objects(category__startswith=brandname)
+                return Product.objects(category__startswith=categoryname)
 
         if endswith:
             if caseinsensitive:  # case insensitive
-                return Product.objects(category__iendswith=brandname)
+                return Product.objects(category__iendswith=categoryname)
             else:  # not case insensitive
-                return Product.objects(category__endswith=brandname)
+                return Product.objects(category__endswith=categoryname)
 
         if contains:
             if caseinsensitive:  # case insensitive
-                return Product.objects(category__icontains=brandname)
+                return Product.objects(category__icontains=categoryname)
             else:  # not case insensitive
-                return Product.objects(category__contains=brandname)
+                return Product.objects(category__contains=categoryname)
+
+
+
+
+sf = SearchFilter()
+for prod in sf.search_category(categoryname='electr',  startswith=True):
+    print(prod.category)
+
+for prod in sf.search_price(range=True, minvalue=150, maxvalue=600, value=0):
+    print(prod.price)
+
+for prod in sf.search_price(value=150, gt=True):
+    print(prod.price)
 
 
 
